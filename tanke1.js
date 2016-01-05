@@ -6,11 +6,15 @@ function Tank(x, y, speed, direct) {
 	this.y = y;//坦克中心的x坐标
 	this.speed = speed;//坦克移动速度
 	this.direct = direct; //坦克的方向
+	this.top = false;
+	this.bottom = false;
+	this.left = false;
+	this.right = false;
 }
 Tank.prototype = {
 	moveUp: function() {
 		this.y -= this.speed;
-		this.direct = 0;
+		this.direct =0;
 		if (this.y <= 10) {
 			this.y = 10;
 		}
@@ -37,7 +41,7 @@ Tank.prototype = {
 		}
 	},
 };
-var ownTank = new Tank(100, 200, 4, 0);
+var ownTank = new Tank(100, 200, 4,0);
 
 // 画出坦克
 function drawTank(tank) {
@@ -56,38 +60,66 @@ function drawTank(tank) {
 	c.strokeStyle = 'RGB(255,204,102)';
 	c.moveTo(0, 0);
 	c.lineTo(0, -10);
+	c.closePath();
 	c.stroke();
 	c.restore();
 }
 drawTank(ownTank);
 // 先打开一个定时器，让坦克处于准备移动状态，当按下某个方向键，就改变值为true;
 // 避免直接用键盘事件，改变方向时会延迟。
-setInterval(function change() {
+setInterval(function () {
+	function change() {
 		c.clearRect(0, 0, canvas1.width, canvas1.height);
 		drawTank(ownTank);
-	}, 50);
+	}
+	if (ownTank.top) {
+		ownTank.moveUp();
+		change();
+	}else if (ownTank.left) {
+		ownTank.moveLeft();
+		change();
+	}else if (ownTank.bottom) {
+		ownTank.moveDown();
+		change();
+	}else if (ownTank.right) {
+		ownTank.moveRight();
+		change();
+	}
+}, 50);
 
-function gameControl() {
+// 键盘事件
+document.onkeydown = function() {
 	var event = event ? event : window.event;
 	switch (event.keyCode) {
 		case 87:
-			ownTank.moveUp();
+			ownTank.top =true;
 			break;
 		case 83:
-			ownTank.moveDown();
+			ownTank.bottom = true;
 			break;
 		case 65:
-			ownTank.moveLeft();
+			ownTank.left = true;
 			break;
 		case 68:
-			ownTank.moveRight();
+			ownTank.right = true;
 			break;
 	}
-}
-
-// 键盘事件
-
-document.onkeydown = function() {
-	gameControl();
+};
+document.onkeyup = function() {
+	var event = event ? event : window.event;
+	switch (event.keyCode) {
+		case 87:
+			ownTank.top =false;
+			break;
+		case 83:
+			ownTank.bottom = false;
+			break;
+		case 65:
+			ownTank.left = false;
+			break;
+		case 68:
+			ownTank.right = false;
+			break;
+	}
 };
 
