@@ -4,30 +4,32 @@ var height = canvas1.height;
 var c = canvas1.getContext('2d');
 
 // 自己的坦克
-var ownTank = new OwnTank(100, 200, 3,0);//我的坦克速度3，方向向上
+var ownTank = new OwnTank(100, 350, 3,0);//我的坦克速度3，方向向上
 // 敌人的坦克
 var enemys = [];
-for (var i = 0; i < 3; i++) {
-	enemys.push(new EnemyTank((width/2-10)*i+10,10,3,2));//敌人坦克速度3，方向向下。
+for (var i = 0; i < 20; i++) {
+	enemys.push(new EnemyTank((width/15-10)*i+10,10,3,2));//敌人坦克速度3，方向向下。a
 }
+// 合并坦克
+var allTank = enemys.concat(ownTank);
 // 键盘事件
 document.onkeydown = function() {
 	var event = event ? event : window.event;
 	// alert(event.keyCode);
 	switch (event.keyCode) {
-		case 87:  //键W
-			ownTank.top =true;
+		case 87: //键W
+			ownTank.moveStates[0] = true;
 			break;
-		case 83:     //键S
-			ownTank.bottom = true;
+		case 68: //键D
+			ownTank.moveStates[1] = true;
 			break;
-		case 65:   //键A
-			ownTank.left = true;
+		case 83: //键S
+			ownTank.moveStates[2] = true;
 			break;
-		case 68:   //键D
-			ownTank.right = true;
+		case 65: //键A
+			ownTank.moveStates[3] = true;
 			break;
-		case 75:    //键k
+		case 75: //键k
 			ownTank.shot();
 	}
 };
@@ -35,16 +37,16 @@ document.onkeyup = function() {
 	var event = event ? event : window.event;
 	switch (event.keyCode) {
 		case 87:
-			ownTank.top =false;
-			break;
-		case 83:
-			ownTank.bottom = false;
-			break;
-		case 65:
-			ownTank.left = false;
+			ownTank.moveStates[0] = false;
 			break;
 		case 68:
-			ownTank.right = false;
+			ownTank.moveStates[1] = false;
+			break;
+		case 83:
+			ownTank.moveStates[2] = false;
+			break;
+		case 65:
+			ownTank.moveStates[3] = false;
 			break;
 	}
 };
@@ -52,42 +54,80 @@ document.onkeyup = function() {
 // 当按下某个方向键，就改变值为true，不然掉转方向会有延迟。
 setInterval(function () {
 	checkDead();
+	checkBlock();
 	c.clearRect(0, 0, width, height);	
-	if (ownTank.top) {
+	if (ownTank.moveStates[0]) {
 		ownTank.moveUp();
-	}else if (ownTank.left) {
-		ownTank.moveLeft();
-	}else if (ownTank.bottom) {
-		ownTank.moveDown();
-	}else if (ownTank.right) {
+	}else if (ownTank.moveStates[1]) {
 		ownTank.moveRight();
+	}else if (ownTank.moveStates[2]) {
+		ownTank.moveDown();
+	}else if (ownTank.moveStates[3]) {
+		ownTank.moveLeft();
 	}
-	drawTank(ownTank);
-	for (var i = 0; i < enemys.length; i++) {
-		drawTank(enemys[i]);
-		for (var k = 0; k < enemys[i].bullets.length; k++) {
-			drawBullet(enemys[i].bullets[k]);
+	for (var i = 0; i < allTank.length; i++) {
+		drawTank(allTank[i]);
+		for (var k = 0; k < allTank[i].bullets.length; k++) {
+			drawBullet(allTank[i].bullets[k]);
 		}
 	}
-	for (var j = 0; j < ownTank.bullets.length; j++) {
-		drawBullet(ownTank.bullets[j]);
-	}
-
 }, 30);
-// 检查生死，删除Dead
-function checkDead() {
-	// 检查自己坦克子弹生死
-	for (var i = 0; i < ownTank.bullets.length; i++) {
-		if(ownTank.bullets[i].isDead){
-			ownTank.bullets.deleteElement(ownTank.bullets[i]);
-		}
+
+//碰撞检测函数
+function coincident(one,two,width) {
+	var x = Math.abs(one.x-two.x);
+	var y = Math.abs(one.y-two.y);
+	if (x<=width&&y<=width) {
+		one.isDead = two.isDead = true;
 	}
-	for (var j = 0; j < enemys.length; j++) {
-		for (var k = 0; k < enemys[j].bullets.length; k++) {
-			if (enemys[j].bullets[k].isDead) {
-				enemys[j].bullets.deleteElement(enemys[j].bullets[k]);
+}
+
+//坦克之间的碰撞检测！！！
+function checkBlock() {
+	for (var i = 0; i < allTank.length; i++) {
+		for (var j = 0; j < allTank.length; j++) {
+			if (j ==i) {
+				continue;
+			}
+			var nextx =Math.abs(allTank[i].nextX - allTank[j].nextX);
+			var nexty =Math.abs(allTank[i].nextY - allTank[j].nextY);
+			if (nextx<20&&nexty<20) {
+				allTank[i].isBlock = true;
+				allTank[i].changeDirect();
 			}
 		}
 	}
 }
+
+// 检查生死，删除Dead
+function checkDead() {
+	for (var i = 0; i < allTank.length; i++) {
+		var temp = allTank[i];
+		if (temp.isDead) {
+			allTank.deleteElement(temp);
+		}
+	}
+	// 检查坦克子弹生死
+	for (var i = 0; i < allTank.length; i++) {
+		for (var j = 0; j < allTank[i].bullets.length; j++) {
+			if (allTank[i].bullets[j].isDead) {
+				allTank[i].bullets.deleteElement(allTank[i].bullets[j]);
+			}
+		}
+	}
+	
+	for (var i = 0; i < allTank.length; i++) {
+		for (var j = 0; j < allTank[i].bullets.length; j++) {
+			for (var m = i+1; m < allTank.length; m++) {
+				for (var n = 0; n < allTank[m].bullets.length; n++) {
+					coincident(allTank[i].bullets[j],allTank[m].bullets[n],8);
+				}
+			}
+
+		}
+	}
+
+}
+
+
 

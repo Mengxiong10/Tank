@@ -13,7 +13,7 @@ function drawTank(tank) {
 	c.arc(0, 0, 3, 0, 2 * Math.PI);
 	c.fill();
 	c.beginPath();
-	c.lineWidth = 1.5;
+	c.lineWidth = 2;
 	c.strokeStyle = tank.color[2];
 	c.moveTo(0, 0);
 	c.lineTo(0, -10);
@@ -24,7 +24,7 @@ function drawTank(tank) {
 // 画子弹
 function drawBullet(bullet){
 	c.beginPath();
-	c.arc(bullet.x,bullet.y,2,0,2*Math.PI);//子弹半径是2
+	c.arc(bullet.x,bullet.y,4,0,2*Math.PI);//子弹半径是2
 	c.fillStyle = bullet.color;
 	c.fill();
 }
