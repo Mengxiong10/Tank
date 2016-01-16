@@ -4,11 +4,11 @@ var height = canvas1.height;
 var c = canvas1.getContext('2d');
 
 // 自己的坦克
-var ownTank = new OwnTank(100, 350, 3,0);//我的坦克速度3，方向向上
+var ownTank = new OwnTank(430, 550, 4, 0); //我的坦克速度3，方向向上
 // 敌人的坦克
 var enemys = [];
-for (var i = 0; i < 20; i++) {
-	enemys.push(new EnemyTank((width/15-10)*i+10,10,3,2));//敌人坦克速度3，方向向下。a
+for (var i = 0; i < 15; i++) {
+	enemys.push(new EnemyTank((width / 15 - 10) * i + 10, 15+400, 5, 0)); //敌人坦克速度3，方向向下。a
 }
 // 合并坦克
 var allTank = enemys.concat(ownTank);
@@ -52,19 +52,24 @@ document.onkeyup = function() {
 };
 // 打开一个定时器，不停的刷新画布，同时让自己坦克处于准备移动状态，
 // 当按下某个方向键，就改变值为true，不然掉转方向会有延迟。
-setInterval(function () {
+setInterval(function() {
 	checkDead();
-	checkBlock();
-	c.clearRect(0, 0, width, height);	
+	// checkBlock();
+	// mapBlock();
+	if (ownTank.isDead) {
+	ownTank.newLife();
+}
+	c.clearRect(0, 0, width, height);
 	if (ownTank.moveStates[0]) {
 		ownTank.moveUp();
-	}else if (ownTank.moveStates[1]) {
+	} else if (ownTank.moveStates[1]) {
 		ownTank.moveRight();
-	}else if (ownTank.moveStates[2]) {
+	} else if (ownTank.moveStates[2]) {
 		ownTank.moveDown();
-	}else if (ownTank.moveStates[3]) {
+	} else if (ownTank.moveStates[3]) {
 		ownTank.moveLeft();
 	}
+	drawMap(0);
 	for (var i = 0; i < allTank.length; i++) {
 		drawTank(allTank[i]);
 		for (var k = 0; k < allTank[i].bullets.length; k++) {
@@ -74,30 +79,46 @@ setInterval(function () {
 }, 30);
 
 //碰撞检测函数
-function coincident(one,two,width) {
-	var x = Math.abs(one.x-two.x);
-	var y = Math.abs(one.y-two.y);
-	if (x<=width&&y<=width) {
+function coincident(one, two, width) {
+	var x = Math.abs(one.x - two.x);
+	var y = Math.abs(one.y - two.y);
+	if (x <= width && y <= width) {
 		one.isDead = two.isDead = true;
 	}
 }
-
 //坦克之间的碰撞检测！！！
 function checkBlock() {
 	for (var i = 0; i < allTank.length; i++) {
 		for (var j = 0; j < allTank.length; j++) {
-			if (j ==i) {
+			if (j == i) {
 				continue;
 			}
-			var nextx =Math.abs(allTank[i].nextX - allTank[j].nextX);
-			var nexty =Math.abs(allTank[i].nextY - allTank[j].nextY);
-			if (nextx<20&&nexty<20) {
+			var nextx = Math.abs(allTank[i].nextX - allTank[j].nextX);
+			var nexty = Math.abs(allTank[i].nextY - allTank[j].nextY);
+			if (nextx < allTank[i].w && nexty < allTank[i].h) {
 				allTank[i].isBlock = true;
 				allTank[i].changeDirect();
 			}
 		}
 	}
 }
+
+function mapBlock() {
+	for (var i = 0; i < map[0].length; i++) {
+		for (var j = 0; j < map[0][i].length; j++) {
+			if (map[0][i][j] == 1) {
+				for (var m = 0; m < allTank.length; m++) {
+					if (allTank[m].nextX + 14 > j * 30 && allTank[m].nextX - 14 < j * 30 + 30 && allTank[m].nextY + 14 >i * 30 && allTank[m].nextY - 14 < i * 30 + 30) {
+						allTank[m].isBlock = true;
+						allTank[m].changeDirect();
+					}
+				}
+			}
+		}
+	}
+}
+
+
 
 // 检查生死，删除Dead
 function checkDead() {
@@ -112,15 +133,16 @@ function checkDead() {
 		for (var j = 0; j < allTank[i].bullets.length; j++) {
 			if (allTank[i].bullets[j].isDead) {
 				allTank[i].bullets.deleteElement(allTank[i].bullets[j]);
+
 			}
 		}
 	}
-	
+	//子弹碰撞
 	for (var i = 0; i < allTank.length; i++) {
 		for (var j = 0; j < allTank[i].bullets.length; j++) {
-			for (var m = i+1; m < allTank.length; m++) {
+			for (var m = i + 1; m < allTank.length; m++) {
 				for (var n = 0; n < allTank[m].bullets.length; n++) {
-					coincident(allTank[i].bullets[j],allTank[m].bullets[n],8);
+					coincident(allTank[i].bullets[j], allTank[m].bullets[n], 8);
 				}
 			}
 
@@ -128,6 +150,3 @@ function checkDead() {
 	}
 
 }
-
-
-
